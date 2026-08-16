@@ -1,0 +1,307 @@
+{
+  "NLP": {
+    "overview": "Natural Language Processing (NLP) is the field of AI focused on enabling computers to understand, interpret, and generate human language.",
+    "required_libraries": [
+      "nltk",
+      "spacy",
+      "scikit-learn",
+      "transformers (optional, local only)"
+    ],
+    "folder_structure": "nlp_project/\n  data/\n  notebooks/\n  src/\n    preprocessing.py\n    model.py\n  requirements.txt",
+    "dataset_suggestions": [
+      "IMDB Reviews",
+      "20 Newsgroups",
+      "SMS Spam Collection"
+    ],
+    "common_errors": [
+      "Forgetting to lowercase/tokenize text before vectorizing",
+      "Using a vocabulary fit on training data but not reused for test data",
+      "Ignoring stopword removal leading to noisy features"
+    ],
+    "steps": [
+      "Collect and clean raw text data",
+      "Tokenize and normalize (lowercase, remove punctuation)",
+      "Vectorize with TF-IDF or Bag-of-Words",
+      "Train a classifier (e.g. Logistic Regression, Naive Bayes)",
+      "Evaluate with precision/recall/F1"
+    ],
+    "detailed_explanation": "NLP is the bridge between raw human text and something a machine can compute on. Under the hood, every NLP pipeline does the same three things: turn text into numbers (representation), learn or apply a mapping from those numbers to an output (modeling), and turn the model's output back into something a human understands (interpretation). Classic NLP (TF-IDF + Logistic Regression / Naive Bayes) treats a sentence as a bag of weighted word counts and works well for topic/sentiment classification on modest data. Modern NLP (transformers) instead learns dense contextual embeddings \u2014 the vector for 'bank' differs between 'river bank' and 'bank loan' \u2014 which is what makes tasks like NER, translation, and summarization possible. As a learner, start with the classic pipeline so you understand *why* vectorization matters, then move to transformer fine-tuning once the fundamentals (tokenization, vectorization, evaluation) are solid.",
+    "roadmap": [
+      {
+        "phase": "Phase 1 \u2014 Foundations (Week 1-2)",
+        "tasks": [
+          "Learn what a corpus, token, and vocabulary are, and why raw text can't go into a model directly",
+          "Practice tokenization, lowercasing, punctuation/stopword removal with NLTK or spaCy",
+          "Implement Bag-of-Words and TF-IDF vectorization from scratch once, then with scikit-learn",
+          "Understand precision, recall, F1, and confusion matrices before touching any model"
+        ]
+      },
+      {
+        "phase": "Phase 2 \u2014 Build a Classic Pipeline (Week 3-4)",
+        "tasks": [
+          "Pick a small labeled dataset (SMS Spam, IMDB Reviews, 20 Newsgroups)",
+          "Build train/test split with stratification so class balance is preserved",
+          "Train Logistic Regression and Naive Bayes; compare accuracy/F1 side by side",
+          "Do error analysis: read 10 misclassified examples and note *why* the model failed",
+          "Save the fitted vectorizer + model together (pickle/joblib) so inference reuses the same vocabulary"
+        ]
+      },
+      {
+        "phase": "Phase 3 \u2014 Move to Embeddings & Transformers (Week 5-6)",
+        "tasks": [
+          "Learn what word embeddings solve that TF-IDF cannot (semantic similarity, synonyms)",
+          "Try a pretrained sentence-embedding model locally to compute text similarity",
+          "Fine-tune (or at least run inference with) a small local transformer classifier",
+          "Compare transformer results vs your classic baseline on the same test set and dataset split"
+        ]
+      },
+      {
+        "phase": "Phase 4 \u2014 Ship & Extend (Week 7+)",
+        "tasks": [
+          "Wrap the trained pipeline in a simple function/API (input text -> label + confidence)",
+          "Add basic input validation (empty text, non-English text, very long text)",
+          "Try a second task on the same skills \u2014 NER, summarization, or intent classification",
+          "Write a short README documenting preprocessing steps so results are reproducible"
+        ]
+      }
+    ]
+  },
+  "SLM": {
+    "overview": "Small Language Models (SLMs) are compact transformer models (typically under ~10B parameters) designed to run efficiently on local or edge hardware.",
+    "required_libraries": [
+      "ollama",
+      "llama-cpp-python",
+      "transformers"
+    ],
+    "folder_structure": "slm_project/\n  models/\n  prompts/\n  src/\n    inference.py\n  requirements.txt",
+    "dataset_suggestions": [
+      "Custom domain text corpus",
+      "Alpaca-style instruction data"
+    ],
+    "common_errors": [
+      "Running a model too large for available RAM",
+      "Not quantizing the model for local inference",
+      "Ignoring context window limits"
+    ],
+    "steps": [
+      "Choose a small model (e.g. phi3:mini, qwen2.5:3b)",
+      "Install and run it locally via Ollama or llama.cpp",
+      "Design and test prompts",
+      "Wrap inference in a local API for your app",
+      "Evaluate output quality manually or with a rubric"
+    ],
+    "detailed_explanation": "Small Language Models trade raw capability for something GPT-4-class models can't offer: they run on a laptop or phone, respond in milliseconds instead of seconds, cost nothing per token, and keep every prompt fully offline/private. The core skill isn't training an SLM from scratch (almost nobody does that) \u2014 it's *selecting, quantizing, running, and prompting* an existing open-weight model efficiently. A quantized 3-4B model (e.g. Phi-3-mini, Qwen2.5-3B, Gemma-2B) can already do decent summarization, extraction, and simple reasoning if the prompt is well-scoped. The main engineering skill to build is knowing the model's real limits \u2014 context window, reasoning depth, hallucination rate \u2014 and designing your app around them (shorter prompts, retrieval instead of memorization, structured output formats).",
+    "roadmap": [
+      {
+        "phase": "Phase 1 \u2014 Get a Model Running Locally (Day 1-2)",
+        "tasks": [
+          "Install Ollama (or llama.cpp) and pull a small model such as phi3:mini or qwen2.5:3b",
+          "Run a few prompts from the CLI and observe response latency and quality",
+          "Learn what quantization (Q4, Q5, Q8) trades off between speed, RAM use, and accuracy",
+          "Check your hardware limits: RAM needed roughly scales with model size x quant level"
+        ]
+      },
+      {
+        "phase": "Phase 2 \u2014 Prompting & Evaluation (Day 3-5)",
+        "tasks": [
+          "Write 5-10 test prompts representative of your real use case, not toy examples",
+          "Compare zero-shot vs few-shot prompting on the same task",
+          "Track a simple rubric (correctness, format compliance, hallucination) per response",
+          "Identify the model's failure modes: long context loss, math errors, made-up facts"
+        ]
+      },
+      {
+        "phase": "Phase 3 \u2014 Wrap It in an App (Week 2)",
+        "tasks": [
+          "Build a thin local API/function around ollama's REST endpoint (or Python client)",
+          "Add structured output constraints (JSON schema, regex validation, retries on bad output)",
+          "Add context-window-aware truncation so long inputs don't silently get cut mid-sentence",
+          "Log every prompt/response pair locally for later evaluation"
+        ]
+      },
+      {
+        "phase": "Phase 4 \u2014 Optimize & Compare (Week 3+)",
+        "tasks": [
+          "Benchmark 2-3 different small models on the *same* eval set (latency, quality, RAM)",
+          "Try a smaller quantization level and measure the quality/speed tradeoff",
+          "If quality is insufficient, decide: bigger SLM, RAG (external knowledge), or a cloud model as fallback",
+          "Document which model you chose and why, with the numbers to back it"
+        ]
+      }
+    ]
+  },
+  "Agentic AI": {
+    "overview": "Agentic AI systems use an LLM (or rules) to plan, take actions via tools, observe results, and iterate toward a goal.",
+    "required_libraries": [
+      "local orchestration code",
+      "ollama (optional)"
+    ],
+    "folder_structure": "agent_project/\n  tools/\n  memory/\n  src/\n    planner.py\n    executor.py\n  requirements.txt",
+    "dataset_suggestions": [
+      "Synthetic task logs",
+      "Tool-use transcripts you author yourself"
+    ],
+    "common_errors": [
+      "No loop termination condition (infinite tool calls)",
+      "Not validating tool outputs before reuse",
+      "Overloading a single agent with too many responsibilities"
+    ],
+    "steps": [
+      "Define the agent's goal and available tools",
+      "Implement a planning/reasoning step",
+      "Implement tool execution with error handling",
+      "Add memory/state tracking between steps",
+      "Add a stopping condition and test edge cases"
+    ],
+    "detailed_explanation": "An agent is a loop, not a single call: Plan -> Act -> Observe -> Repeat -> Stop. The LLM (or rule-based planner) decides *what tool to use next* based on the goal and what's happened so far, a tool executes and returns a result, the agent observes that result and updates its plan, and the loop continues until a stopping condition is met (goal achieved, max steps hit, or a hard error). The single biggest source of bugs in agent projects is a missing or weak stopping condition \u2014 agents that call tools forever, or that never validate a tool's output before acting on it again. The second biggest is giving one agent too many responsibilities; multi-agent designs (a planner agent + specialized worker agents) tend to be more debuggable than one giant agent with 15 tools.",
+    "roadmap": [
+      {
+        "phase": "Phase 1 \u2014 Design Before Code (Day 1-2)",
+        "tasks": [
+          "Write the agent's goal in one sentence, and list every tool it's allowed to use",
+          "Draw the Plan -> Act -> Observe -> Stop loop on paper before writing any code",
+          "Decide the stopping conditions up front: max iterations, success check, budget/timeout",
+          "Decide what 'memory' the agent needs between steps (scratchpad, conversation history, files)"
+        ]
+      },
+      {
+        "phase": "Phase 2 \u2014 Build the Skeleton (Day 3-5)",
+        "tasks": [
+          "Implement each tool as a pure function with clear inputs/outputs and explicit error returns",
+          "Implement the planning step (LLM call or rule-based) that picks the next action",
+          "Implement the executor that runs the chosen tool and captures success/failure",
+          "Add the stop condition check at the *top* of every loop iteration, not just at the end"
+        ]
+      },
+      {
+        "phase": "Phase 3 \u2014 Add Robustness (Week 2)",
+        "tasks": [
+          "Validate every tool output before feeding it back into the next planning step",
+          "Add retry logic with a cap (don't retry forever on the same failing tool call)",
+          "Log every step (thought, action, observation) so you can replay and debug a run",
+          "Test deliberately adversarial cases: a tool that fails, returns garbage, or times out"
+        ]
+      },
+      {
+        "phase": "Phase 4 \u2014 Scale Up (Week 3+)",
+        "tasks": [
+          "Split one overloaded agent into a planner + specialized sub-agents if responsibilities have grown",
+          "Add a budget (max tool calls or max tokens) to bound worst-case cost/time",
+          "Add human-in-the-loop confirmation before any irreversible action (sending, deleting, paying)",
+          "Write a small eval set of tasks the agent must complete, and re-run it after every change"
+        ]
+      }
+    ]
+  },
+  "Generative AI": {
+    "overview": "Generative AI covers models that create new content (text, images, audio) rather than just classifying or predicting a label.",
+    "required_libraries": [
+      "torch",
+      "diffusers (optional, local)",
+      "ollama (optional)"
+    ],
+    "folder_structure": "genai_project/\n  data/\n  src/\n    generator.py\n  outputs/\n  requirements.txt",
+    "dataset_suggestions": [
+      "MNIST (for simple image generation)",
+      "Custom text corpus"
+    ],
+    "common_errors": [
+      "Mode collapse in GANs",
+      "Not normalizing input data before training",
+      "Evaluating generative quality with the wrong metric"
+    ],
+    "steps": [
+      "Pick a generative approach (GAN, VAE, or local LLM)",
+      "Prepare and normalize training data",
+      "Build and train a small model or configure a local model",
+      "Generate samples and qualitatively review them",
+      "Iterate on architecture or prompts"
+    ],
+    "detailed_explanation": "Generative models learn the underlying *distribution* of the training data so they can draw new, plausible samples from it, instead of just mapping an input to a fixed label. A GAN does this adversarially (a generator tries to fool a discriminator); a VAE does it by learning a compressed latent space and decoding samples back out; a local LLM does it autoregressively, predicting the next token given everything before it. The practical skill for a beginner isn't picking the fanciest architecture \u2014 it's getting a *small* generative model to train stably on a *small* dataset first (MNIST digits, a tiny text corpus), because failure modes like mode collapse and exploding loss are much easier to diagnose at small scale than after committing days of training time to something large.",
+    "roadmap": [
+      {
+        "phase": "Phase 1 \u2014 Pick an Approach & Prepare Data (Day 1-2)",
+        "tasks": [
+          "Choose GAN, VAE, or a local LLM based on your output type (images vs text) and compute budget",
+          "Pick a small, well-understood dataset (MNIST for images, a small text corpus for text)",
+          "Normalize/scale input data (e.g. pixel values to [-1, 1] or [0, 1]) before training",
+          "Decide your evaluation approach up front \u2014 generative quality has no single perfect metric"
+        ]
+      },
+      {
+        "phase": "Phase 2 \u2014 Build & Train a Small Model (Day 3-7)",
+        "tasks": [
+          "Implement a minimal generator/discriminator (GAN) or encoder/decoder (VAE) \u2014 small on purpose",
+          "Train for a short run first and sanity-check outputs before scaling up epochs",
+          "Watch for mode collapse (GAN outputs becoming near-identical) or posterior collapse (VAE)",
+          "Log loss curves for every component (generator loss, discriminator loss, reconstruction loss)"
+        ]
+      },
+      {
+        "phase": "Phase 3 \u2014 Evaluate & Iterate (Week 2)",
+        "tasks": [
+          "Qualitatively review a grid of generated samples, not just the loss number",
+          "Try a quantitative proxy metric where relevant (e.g. FID for images) alongside human review",
+          "Tune one hyperparameter at a time (learning rate, latent dim, batch size) and re-check outputs",
+          "If using a local LLM instead, evaluate coherence/relevance on held-out prompts"
+        ]
+      },
+      {
+        "phase": "Phase 4 \u2014 Extend (Week 3+)",
+        "tasks": [
+          "Try conditional generation (class-conditional GAN/VAE, or prompt-conditioned LLM output)",
+          "Add basic safety/quality filtering on generated outputs before they reach a user",
+          "Package generation behind a simple function/API with clear input constraints",
+          "Document known failure modes so future users of your model know its limits"
+        ]
+      }
+    ]
+  },
+  "RAG": {
+    "overview": "Retrieval-Augmented Generation (RAG) combines a document retriever with a language model so answers are grounded in your own data.",
+    "required_libraries": [
+      "sentence-transformers",
+      "faiss-cpu / chromadb",
+      "ollama (optional, local LLM)"
+    ],
+    "folder_structure": "rag_project/\n  documents/\n  src/\n    embed.py\n    retrieve.py\n    generate.py\n  index/\n  requirements.txt",
+    "dataset_suggestions": [
+      "Your own PDFs/notes",
+      "Wikipedia article subsets"
+    ],
+    "common_errors": [
+      "Chunking documents too large or too small",
+      "Not normalizing embeddings before similarity search",
+      "Feeding irrelevant retrieved chunks into the prompt"
+    ],
+    "steps": [
+      "Chunk and clean your source documents",
+      "Generate embeddings for each chunk locally",
+      "Build a vector index (FAISS/Chroma)",
+      "Retrieve top-k relevant chunks for a query",
+      "Feed retrieved context + query into a local LLM for the answer"
+    ]
+  },
+  "Prompt Engineering": {
+    "overview": "Prompt engineering is the practice of designing inputs to a language model to reliably get the desired output.",
+    "required_libraries": [
+      "ollama (for local testing)"
+    ],
+    "folder_structure": "prompt_project/\n  prompts/\n  evaluations/\n  src/\n    test_prompts.py\n  requirements.txt",
+    "dataset_suggestions": [
+      "A small set of representative test queries for your use case"
+    ],
+    "common_errors": [
+      "Vague instructions with no examples",
+      "Not specifying the desired output format",
+      "Testing only one prompt variant instead of comparing several"
+    ],
+    "steps": [
+      "Define the task and desired output format clearly",
+      "Write an initial prompt with explicit instructions",
+      "Add few-shot examples if needed",
+      "Test against multiple sample inputs",
+      "Iterate based on failure cases"
+    ]
+  }
+}
