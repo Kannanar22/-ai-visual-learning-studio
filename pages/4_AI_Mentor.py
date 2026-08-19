@@ -1,95 +1,141 @@
 import json
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from pathlib import Path
+
 import streamlit as st
+
 from engine.ui_theme import inject_premium_css, premium_divider
+from engine.topic_viva import generate_topic_viva_questions, supported_topics
 
 st.set_page_config(page_title="AI Project Mentor", page_icon="🎓", layout="wide")
 inject_premium_css()
-st.title("🎓 Offline AI Project Mentor")
+
+st.title("🎓 AI Project Mentor")
 premium_divider()
-st.caption("Static, curated guides — no API calls, ever.")
-
-kb_path = os.path.join(os.path.dirname(__file__), "..", "knowledge_base", "topics.json")
-with open(kb_path, "r") as f:
-    topics = json.load(f)
-
-TOPIC_ICONS = {
-    "NLP": "💬", "SLM": "🤏", "Agentic AI": "🤖", "Generative AI": "🎨",
-    "RAG": "📚", "Prompt Engineering": "✍️",
-}
+st.caption("Static, offline guides + an offline viva-question generator for your own code — no external AI APIs.")
 
 # ---------------------------------------------------------------------------
-# Prominent, clearly-visible topic selector
+# Load the static knowledge base
 # ---------------------------------------------------------------------------
-st.markdown('<span class="premium-badge">🎯 Choose a topic</span>', unsafe_allow_html=True)
-topic_labels = [f"{TOPIC_ICONS.get(t, '📌')}  {t}" for t in topics.keys()]
-label_to_topic = dict(zip(topic_labels, topics.keys()))
-chosen_label = st.selectbox(
-    "Choose a topic",
-    topic_labels,
-    label_visibility="collapsed",
-    key="mentor_topic_select",
-)
-topic = label_to_topic[chosen_label]
-data = topics[topic]
+KB_PATH = Path(__file__).resolve().parent.parent / "knowledge_base" / "topics.json"
 
-st.markdown(
-    f'<div style="padding:16px 20px;border-radius:14px;'
-    f'background:linear-gradient(135deg, rgba(79,70,229,0.10), rgba(219,39,119,0.08));'
-    f'border:1px solid rgba(99,102,241,0.25);margin:6px 0 18px 0;">'
-    f'<span style="font-size:26px;">{TOPIC_ICONS.get(topic, "📌")}</span>'
-    f'&nbsp;&nbsp;<span style="font-size:22px;font-weight:800;">{topic}</span>'
-    f'</div>',
-    unsafe_allow_html=True,
-)
 
-st.write(data["overview"])
+@st.cache_data
+def load_topics() -> dict:
+    with open(KB_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-if data.get("detailed_explanation"):
-    st.markdown('<span class="premium-badge">📘 Deep dive</span>', unsafe_allow_html=True)
-    st.markdown(
-        f'<div style="padding:14px 18px;border-radius:12px;background:rgba(255,255,255,0.75);'
-        f'border:1px solid rgba(99,102,241,0.15);line-height:1.6;">{data["detailed_explanation"]}</div>',
-        unsafe_allow_html=True,
-    )
 
-premium_divider()
+TOPICS = load_topics()
 
-c1, c2 = st.columns(2)
-with c1:
-    st.subheader("📦 Required libraries")
-    for lib in data["required_libraries"]:
-        st.markdown(f"- `{lib}`")
+# Order tabs so the four topics with a viva-question generator lead, matching
+# what the app promises on the home page, then RAG / Prompt Engineering.
+TAB_ORDER = ["NLP", "SLM", "Generative AI", "Agentic AI", "RAG", "Prompt Engineering"]
+TAB_ORDER = [t for t in TAB_ORDER if t in TOPICS] + [t for t in TOPICS if t not in TAB_ORDER]
 
-    st.subheader("📁 Folder structure")
-    st.code(data["folder_structure"], language="text")
+VIVA_ENABLED_TOPICS = set(supported_topics())
 
-with c2:
-    st.subheader("🗂️ Dataset suggestions")
-    for ds in data["dataset_suggestions"]:
-        st.markdown(f"- {ds}")
+tabs = st.tabs([f"📌 {t}" for t in TAB_ORDER])
 
-    st.subheader("⚠️ Common errors")
-    for err in data["common_errors"]:
-        st.markdown(f"- {err}")
+for tab, topic in zip(tabs, TAB_ORDER):
+    with tab:
+        data = TOPICS[topic]
 
-premium_divider()
+        st.markdown(f'<span class="premium-badge">AI PROJECT MENTOR</span>', unsafe_allow_html=True)
+        st.subheader(topic)
+        st.write(data.get("overview", ""))
 
-# ---------------------------------------------------------------------------
-# "Things to do" — phased roadmap when available (NLP, SLM, Agentic AI,
-# Generative AI), falling back to the flat step list otherwise.
-# ---------------------------------------------------------------------------
-if data.get("roadmap"):
-    st.markdown('<span class="premium-badge">🪜 Things to do — phased roadmap</span>',
-                unsafe_allow_html=True)
-    st.subheader("Step-by-step, phase by phase")
-    for i, phase in enumerate(data["roadmap"]):
-        with st.expander(f"**{phase['phase']}**", expanded=(i == 0)):
-            for task in phase["tasks"]:
-                st.markdown(f"- {task}")
-else:
-    st.subheader("🪜 Step-by-step guide")
-    for i, step in enumerate(data["steps"], start=1):
-        st.markdown(f"{i}. {step}")
+        if data.get("detailed_explanation"):
+            with st.expander("📖 Detailed explanation", expanded=False):
+                st.write(data["detailed_explanation"])
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("**📚 Required libraries**")
+            for lib in data.get("required_libraries", []):
+                st.markdown(f"- `{lib}`")
+
+            st.markdown("**🗂️ Suggested folder structure**")
+            st.code(data.get("folder_structure", ""), language="text")
+
+        with col2:
+            st.markdown("**🎯 Dataset suggestions**")
+            for ds in data.get("dataset_suggestions", []):
+                st.markdown(f"- {ds}")
+
+            st.markdown("**⚠️ Common errors to avoid**")
+            for err in data.get("common_errors", []):
+                st.markdown(f"- {err}")
+
+        st.markdown("**🪜 High-level steps**")
+        for i, step in enumerate(data.get("steps", []), start=1):
+            st.markdown(f"{i}. {step}")
+
+        # --- Phased roadmap ---------------------------------------------------
+        if data.get("roadmap"):
+            st.markdown("### 🗺️ Things-to-do roadmap")
+            for phase in data["roadmap"]:
+                with st.expander(phase["phase"], expanded=False):
+                    for task in phase.get("tasks", []):
+                        st.markdown(f"- {task}")
+
+        premium_divider()
+
+        # --- Paste-code viva question generator --------------------------------
+        if topic in VIVA_ENABLED_TOPICS:
+            st.markdown(f"### 🎤 Generate {topic} Viva Questions From Your Code")
+            st.caption(
+                f"Paste a {topic} code snippet below (preprocessing, model, prompt, or agent code). "
+                "This is analyzed entirely offline with keyword/AST rules — no AI API is called."
+            )
+
+            code_key = f"viva_code_{topic}"
+            code = st.text_area(
+                f"Paste your {topic} code here",
+                height=220,
+                key=code_key,
+                placeholder="# e.g. paste your tokenizer/vectorizer, model, prompt, or agent-loop code",
+            )
+
+            if st.button(f"Generate viva questions", key=f"viva_btn_{topic}"):
+                if not code.strip():
+                    st.warning("Paste some code first.")
+                else:
+                    result = generate_topic_viva_questions(topic, code)
+
+                    if result["note"]:
+                        st.info(result["note"])
+
+                    if result["matched_rules"]:
+                        st.markdown(f"**Found {len(result['matched_rules'])} concept area(s) in your code:**")
+                        for j, rule in enumerate(result["matched_rules"], start=1):
+                            with st.container(border=True):
+                                st.markdown(
+                                    f"**{j}. Detected: `{rule['keyword_hit']}`** "
+                                    f"<span style='color:#6B7280;font-size:0.85em'>({rule['category']})</span>",
+                                    unsafe_allow_html=True,
+                                )
+                                st.markdown("**Questions an examiner might ask:**")
+                                for q in rule["questions"]:
+                                    st.markdown(f"- {q}")
+                                if rule["answer_points"]:
+                                    with st.expander("💡 Expected answer points"):
+                                        for a in rule["answer_points"]:
+                                            st.markdown(f"- {a}")
+
+                    if result["imports_detected"]:
+                        st.markdown(
+                            "**Libraries imported:** " +
+                            ", ".join(f"`{m}`" for m in result["imports_detected"])
+                        )
+
+                    if result["conceptual_questions"]:
+                        st.markdown("### 🧠 Follow-up conceptual questions")
+                        st.caption(f"General {topic} questions an examiner typically asks after the code walkthrough.")
+                        for q in result["conceptual_questions"]:
+                            st.markdown(f"- {q}")
+        else:
+            st.caption(
+                f"A paste-and-generate viva-question tool isn't wired up for {topic} yet — "
+                "use the roadmap above, or try NLP / SLM / Generative AI / Agentic AI / RAG / "
+                "Prompt Engineering for the code-based generator."
+            )

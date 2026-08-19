@@ -238,6 +238,12 @@ def extract_architecture(code: str) -> Dict[str, Any]:
                     inner_layer["type"] = "Bi" + inner_layer["type"]
                     total = units * 2 if isinstance(units, int) else units
                     inner_layer["detail"] = f"{units} hidden units/direction (bidirectional → {total} total)"
+                    # Keras attaches input_shape to the Bidirectional(...) wrapper itself,
+                    # not the inner recurrent layer — pull it in so the Input layer can
+                    # still be inferred for a Bidirectional-first model.
+                    wrapper_input_shape = _get_kwarg(call, "input_shape", None)
+                    if wrapper_input_shape is not None:
+                        inner_layer["input_shape"] = wrapper_input_shape
                     bidirectional_layers[id(call)] = inner_layer
                     consumed_ids.add(id(inner))
 
